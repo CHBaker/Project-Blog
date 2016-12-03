@@ -8,10 +8,7 @@
       {{p.created.strftime("%b %d, %Y")}}
     </div>
     <div class="post-edit">
-      {% for p in posts %}
-        {% post_id = p.post_id %}
-      <a href="{{'blog/editpost/%s' % post_id}}">edit</a>
-      {% endfor %}
+      <a href="{{'blog/editpost/%s' % p.key().id()}}">edit</a>
     </div>
   </div>
 
