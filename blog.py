@@ -145,6 +145,7 @@ class PostPage(BlogHandler):
             self.error(404)
             return
 
+
         self.render("permalink.html", post = post)
 
 class NewPost(BlogHandler):
@@ -160,7 +161,7 @@ class NewPost(BlogHandler):
 
         subject = self.request.get('subject')
         content = self.request.get('content')
-        author = self.user_id
+        author = self.user.key.id()
 
         if subject and content:
             p = Post(parent = blog_key(), subject = subject, content = content, author = author)
@@ -171,37 +172,36 @@ class NewPost(BlogHandler):
             self.render("newpost.html", subject=subject, content=content, error=error)
 
 class EditPost(BlogHandler):
-    def get(self):
+    def get(self, post_id):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
         post = key.get()
 
         if not post:
-            self.error(404)
-            return
+            return self.error(404)
 
-        self.render("editpost.html", post = post)
+        if self.user:
+            subject = post.subject
+            content = post.content
+            self.render("editpost.html", post = post, subject = subject, content = content)
 
-    def post(self):
-        post = ndb.Key('Post', int(post_id), parent = blog_key)
-        key = key.get()
+    def post(self, post_id):
+        key = ndb.Key('Post', int(post_id), parent = blog_key())
+        post = key.get()
 
         if not self.user:
             return self.redirect('/signup')
 
-        if self.user_id != post.author:
+        if self.user.key.id() != post.author:
             subject = self.request.get('subject')
             content = self.request.get('content')
-
+            author = self.user.key.id()
             if subject and content:
-                author = post.author
-                subject = post.subject
-                content = post.content
-                post.put()
-                self.redirect('/blog/%s' % str(post_id))
-
+                p = Post(parent = blog_key(), subject = subject, content = content, author = author)
+                p.put()
+                self.redirect('/blog')
             else:
                 error = "subject and content, please!"
-                self.render("editpost.html", subject = subject, content = content, error = error)
+                self.render('/blog/editpost/%s' % p.key.id(), subject = subject, content = content, error = error)
 
 ###### Unit 2 HW's
 class Rot13(BlogHandler):
