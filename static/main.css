@@ -159,17 +159,30 @@ input[type=submit] {
     color: #999;
 
 }
-
-.post-edit {
+.post-e-d {
     position: absolute;
     right: 0px;
     padding-top: 3px;
+}
+.post-edit {
     color: #999;
     text-decoration: none;
 }
 
 .post-edit:hover {
     text-decoration: underline;
+}
+
+.post-delete {
+    color: rgba(235, 0, 0, 0.33);
+    text-decoration: none;
+    border: .2px solid transparent;
+}
+
+.post-delete:hover {
+    border: .2px solid rgba(235, 0, 0, 0.33);
+    border-radius: 3px;
+    padding: none;
 }
 
 .post-content {

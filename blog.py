@@ -192,12 +192,18 @@ class EditPost(BlogHandler):
             return self.redirect('/signup')
 
         if self.user.key.id() != post.author:
+            error = "you can only edit your own posts..."
+            self.render('front.html', error = error)
+        else:
             subject = self.request.get('subject')
             content = self.request.get('content')
             author = self.user.key.id()
             if subject and content:
-                p = Post(parent = blog_key(), subject = subject, content = content, author = author)
-                p.put()
+                post.subject = subject
+                post.content = content
+                post.author = author
+                post.parent = blog_key()
+                post.put()
                 self.redirect('/blog')
             else:
                 error = "subject and content, please!"

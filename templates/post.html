@@ -7,9 +7,14 @@
     <div class="post-date">
       {{p.created.strftime("%b %d, %Y")}}
     </div>
-    <div class="post-edit">
+    {% if self.user.key.id() = post.author %}
+    <div class="post-e-d">
       <a class="post-edit" href="{{'/blog/editpost/%s' % p.key.id()}}">edit</a>
+      <span class="post-edit"> / </span>
+      <a class="post-delete" href="/blog">delete{{delete}}</a>
     </div>
+    {% else %}
+    {% endif %}
   </div>
 
   <div class="post-content">
