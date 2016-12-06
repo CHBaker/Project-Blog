@@ -2,19 +2,13 @@
   <div class="post-heading">
     <div class="post-title">
       {{p.subject}}
+      <span class="post-username">by {{p.name}}</span>
     </div>
 
     <div class="post-date">
       {{p.created.strftime("%b %d, %Y")}}
     </div>
-    {% if self.user.key.id() = post.author %}
-    <div class="post-e-d">
-      <a class="post-edit" href="{{'/blog/editpost/%s' % p.key.id()}}">edit</a>
-      <span class="post-edit"> / </span>
-      <a class="post-delete" href="/blog">delete{{delete}}</a>
-    </div>
-    {% else %}
-    {% endif %}
+    {{editpost}}
   </div>
 
   <div class="post-content">

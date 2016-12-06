@@ -126,6 +126,7 @@ class Post(ndb.Model, BlogHandler):
     created = ndb.DateTimeProperty(auto_now_add = True)
     last_modified = ndb.DateTimeProperty(auto_now = True)
     author = ndb.IntegerProperty(required = True)
+    name = ndb.StringProperty(required = True)
 
     def render(self):
         self._render_text = self.content.replace('\n', '<br>')
@@ -133,7 +134,7 @@ class Post(ndb.Model, BlogHandler):
 
 class BlogFront(BlogHandler):
     def get(self):
-        posts = Post.query().order(-Post.created)
+        posts = Post.query(ancestor=blog_key()).order(-Post.created)
         self.render('front.html', posts = posts)
 
 class PostPage(BlogHandler):
@@ -162,9 +163,10 @@ class NewPost(BlogHandler):
         subject = self.request.get('subject')
         content = self.request.get('content')
         author = self.user.key.id()
+        name = self.user.name
 
         if subject and content:
-            p = Post(parent = blog_key(), subject = subject, content = content, author = author)
+            p = Post(parent = blog_key(), subject = subject, content = content, author = author, name = name)
             p.put()
             self.redirect('/blog/%s' % str(p.key.id()))
         else:
@@ -192,8 +194,7 @@ class EditPost(BlogHandler):
             return self.redirect('/signup')
 
         if self.user.key.id() != post.author:
-            error = "you can only edit your own posts..."
-            self.render('front.html', error = error)
+            self.render('front.html', editpost = 'delete.html')
         else:
             subject = self.request.get('subject')
             content = self.request.get('content')
@@ -202,7 +203,6 @@ class EditPost(BlogHandler):
                 post.subject = subject
                 post.content = content
                 post.author = author
-                post.parent = blog_key()
                 post.put()
                 self.redirect('/blog')
             else:
