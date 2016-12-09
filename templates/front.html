@@ -4,7 +4,14 @@
 
   {% for p in posts %}
     {{ p.render() | safe }}
+    {% if post.author == self.user.key.id() %}
+        <div class="post-e-d">
+        <a class="post-edit" href="{{'/blog/editpost/%s' % p.key.id()}}">edit</a>
+        <span class="post-edit"> / </span>
+        <a class="post-delete" href="{{'/blog/deletepost/%s' % p.key.id()}}">delete</a>
+        </div>
+    {% endif %}
     <br><br>
-  {% endfor %}
+    {% endfor %}
 
 {% endblock %}

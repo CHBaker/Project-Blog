@@ -1,5 +1,13 @@
-<div class="post-e-d">
-    <a class="post-edit" href="{{'/blog/editpost/%s' % p.key.id()}}">edit</a>
-    <span class="post-edit"> / </span>
-    <a class="post-delete" href="/blog">delete{{delete}}</a>
-</div>
+{% extends "base.html" %}
+<br>
+<h2> Are you sure you want to delete your thought?</h2>
+<br>
+{% block content %}
+    {{post.render() | safe}}
+    <br>
+    <br>
+    <div class="final-delete">
+    <a href="/blog?delete=yes"> Delete</a>
+    <a hreg="/blog?delete=no"> Nope</a>
+    </div>
+{% endblock %}

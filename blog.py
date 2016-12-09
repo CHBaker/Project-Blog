@@ -193,8 +193,6 @@ class EditPost(BlogHandler):
         if not self.user:
             return self.redirect('/signup')
 
-        if self.user.key.id() != post.author:
-            self.render('front.html', editpost = 'delete.html')
         else:
             subject = self.request.get('subject')
             content = self.request.get('content')
@@ -208,6 +206,27 @@ class EditPost(BlogHandler):
             else:
                 error = "subject and content, please!"
                 self.render('/blog/editpost/%s' % p.key.id(), subject = subject, content = content, error = error)
+
+class DeletePost(BlogHandler):
+    def get(self):
+        key = ndb.Key('Post', int(post_id), parent = blog_key())
+        post = key.get()
+
+        if not post:
+            return self.error(404)
+
+        if self.user:
+            self.render("delete.html", post = post)
+    def post(self):
+        key = ndb.Key('Post', int(post_id), parent = blog_key())
+        post = key.get()
+
+        delete = self.request.get("delete")
+        if delete == "yes":
+            post.delete()
+            self.redirect('/blog')
+        else:
+            self.redirect('/blog')
 
 ###### Unit 2 HW's
 class Rot13(BlogHandler):
