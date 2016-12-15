@@ -127,10 +127,24 @@ class Post(ndb.Model, BlogHandler):
     last_modified = ndb.DateTimeProperty(auto_now = True)
     author = ndb.IntegerProperty(required = True)
     name = ndb.StringProperty(required = True)
-
-    def render(self):
+    #create likes variable intproperty repeated = true
+    def render(self, user):
         self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p = self)
+        return render_str("post.html", p = self, user = user)
+
+    # @classproperty
+    # def like_count(self):
+    #     return likes.length
+
+
+class LikePost(BlogHandler):
+    def get(self, post_id):
+        #get post
+        #if post id and user id
+        #get current user
+        #if user in like propervariable
+        #post.likes.append(self.user)
+        pass
 
 class BlogFront(BlogHandler):
     def get(self):
@@ -208,7 +222,7 @@ class EditPost(BlogHandler):
                 self.render('/blog/editpost/%s' % p.key.id(), subject = subject, content = content, error = error)
 
 class DeletePost(BlogHandler):
-    def get(self):
+    def get(self, post_id):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
         post = key.get()
 
@@ -217,7 +231,8 @@ class DeletePost(BlogHandler):
 
         if self.user:
             self.render("delete.html", post = post)
-    def post(self):
+
+    def post(self, post_id):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
         post = key.get()
 
@@ -353,6 +368,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/([0-9]+)', PostPage),
                                ('/blog/newpost', NewPost),
                                ('/blog/editpost/([0-9]+)', EditPost),
+                               ('/blog/deletepost/([0-9]+)', DeletePost),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),

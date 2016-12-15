@@ -1,13 +1,14 @@
 {% extends "base.html" %}
-<br>
-<h2> Are you sure you want to delete your thought?</h2>
-<br>
+
 {% block content %}
-    {{post.render() | safe}}
+    <br>
+    <h2> Are you sure you want to delete your thought?</h2>
+    <br>
+    {{post.render(user) | safe}}
     <br>
     <br>
     <div class="final-delete">
     <a href="/blog?delete=yes"> Delete</a>
-    <a hreg="/blog?delete=no"> Nope</a>
+    <a href="/blog?delete=no"> Nope</a>
     </div>
 {% endblock %}
