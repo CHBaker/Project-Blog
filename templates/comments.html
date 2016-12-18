@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    {{post.render(user) | safe}}
+    <br><br><hr><br><br>
+    {% if user %}
+    <form method="post">
+        <label>
+        Write Comment
+            <input type="text" name="copmment" value="{{comment}}">
+        </label>
+        <input type="submit">
+    </form>
+    {% endif %}
+    <br><br>
+    {% for c in comments%}
+        <div class="usercomment">
+            {{c.user}}
+        </div>
+        {{c.comment}}
+    {% endfor %}
+
+{% endblock %}

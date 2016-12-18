@@ -120,6 +120,9 @@ class User(ndb.Model):
 def blog_key(name = 'default'):
     return ndb.Key('blogs', name)
 
+def com_key(name = 'default'):
+    return ndb.Key('comments', name)
+
 class Post(ndb.Model, BlogHandler):
     subject = ndb.StringProperty(required = True)
     content = ndb.TextProperty(required = True)
@@ -127,24 +130,62 @@ class Post(ndb.Model, BlogHandler):
     last_modified = ndb.DateTimeProperty(auto_now = True)
     author = ndb.IntegerProperty(required = True)
     name = ndb.StringProperty(required = True)
-    #create likes variable intproperty repeated = true
+    likes = ndb.IntegerProperty(repeated = True)
+    comments = ndb.StructuredProperty(Comment, repeated = True)
+
     def render(self, user):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self, user = user)
 
-    # @classproperty
-    # def like_count(self):
-    #     return likes.length
+#     @classproperty
+#     def like_count(self, user):
+#         return likes.length
 
 
-class LikePost(BlogHandler):
+# class LikePost(BlogHandler):
+#     def get(self, post_id):
+#         key = ndb.Key('Post', int(post_id), parent=blog_key())
+#         post = key.get()
+#         if post and self.user:
+#             if self.user in post.likes:
+#                 post.likes.remove(self.user)
+#             else:
+#                 post.likes.append(self.user)
+
+class Comment(ndb.Model, BlogHandler):
+    comment = ndb.StringProperty(required = True)
+    post = ndb.KeyPropertry(Post)
+    user = ndb.KeyPropertry(User)
+
+class CommentPage(BlogHandler):
     def get(self, post_id):
-        #get post
-        #if post id and user id
-        #get current user
-        #if user in like propervariable
-        #post.likes.append(self.user)
-        pass
+        key = ndb.Key('Post', int(post_id), parent=blog_key())
+        post = key.get()
+
+        if not self.user:
+            self.redirect('/signup')
+        comments = post.comments
+        self.render('comments.html', post = post, comments = comments)
+
+    def post(self, post_id):
+        key = ndb.Key('Post', int(post_id), parent=blog_key())
+        post = key.get()
+
+        if not self.user:
+            self.redirect('/signup')
+        if not post:
+            self.error(404)
+            return
+
+        comment = self.request.get('comment')
+        user = self.user
+
+        if comment != " ":
+            p = Comment(parent = com_key(), comment = comment, post = post, user = user)
+            p.put()
+        else:
+            error = "no blank comments"
+            self.render('comments.html', post = post, comments = comments)
 
 class BlogFront(BlogHandler):
     def get(self):
@@ -195,16 +236,18 @@ class EditPost(BlogHandler):
         if not post:
             return self.error(404)
 
-        if self.user:
+        if self.user and user.key.id() = post.author:
             subject = post.subject
             content = post.content
             self.render("editpost.html", post = post, subject = subject, content = content)
+        else:
+            self.redirect('/blog')
 
     def post(self, post_id):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
         post = key.get()
 
-        if not self.user:
+        if not self.user and user.key.id() = post.author:
             return self.redirect('/signup')
 
         else:
@@ -369,6 +412,7 @@ app = webapp2.WSGIApplication([('/', MainPage),
                                ('/blog/newpost', NewPost),
                                ('/blog/editpost/([0-9]+)', EditPost),
                                ('/blog/deletepost/([0-9]+)', DeletePost),
+                               ('/blog/comments/([0-9]+)', CommentPage),
                                ('/signup', Register),
                                ('/login', Login),
                                ('/logout', Logout),
