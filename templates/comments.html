@@ -3,22 +3,22 @@
 {% block content %}
 
     {{post.render(user) | safe}}
-    <br><br><hr><br><br>
+    <br><br>
     {% if user %}
-    <form method="post">
-        <label>
-        Write Comment
-            <input type="text" name="copmment" value="{{comment}}">
+    <form class="comments-box" method="post">
+        <label class="write">
+        - Write Comment -<br>
         </label>
-        <input type="submit">
+        <input class="combox" type="text" name="comment" value="{{comment}}">
+        <input class="send" type="submit">
     </form>
     {% endif %}
     <br><br>
     {% for c in comments%}
         <div class="usercomment">
-            {{c.user}}
+            {{post.author}}
         </div>
-        {{c.comment}}
+        {{comment}}
     {% endfor %}
 
 {% endblock %}

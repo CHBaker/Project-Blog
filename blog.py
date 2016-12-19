@@ -131,7 +131,6 @@ class Post(ndb.Model, BlogHandler):
     author = ndb.IntegerProperty(required = True)
     name = ndb.StringProperty(required = True)
     likes = ndb.IntegerProperty(repeated = True)
-    comments = ndb.StructuredProperty(Comment, repeated = True)
 
     def render(self, user):
         self._render_text = self.content.replace('\n', '<br>')
@@ -154,8 +153,8 @@ class Post(ndb.Model, BlogHandler):
 
 class Comment(ndb.Model, BlogHandler):
     comment = ndb.StringProperty(required = True)
-    post = ndb.KeyPropertry(Post)
-    user = ndb.KeyPropertry(User)
+    post = ndb.KeyProperty(kind = 'Post', required = True)
+    user = ndb.StringProperty(required = True)
 
 class CommentPage(BlogHandler):
     def get(self, post_id):
@@ -236,7 +235,7 @@ class EditPost(BlogHandler):
         if not post:
             return self.error(404)
 
-        if self.user and user.key.id() = post.author:
+        if self.user and user.key.id() == post.author:
             subject = post.subject
             content = post.content
             self.render("editpost.html", post = post, subject = subject, content = content)
@@ -247,7 +246,7 @@ class EditPost(BlogHandler):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
         post = key.get()
 
-        if not self.user and user.key.id() = post.author:
+        if not self.user and user.key.id() == post.author:
             return self.redirect('/signup')
 
         else:
@@ -275,16 +274,10 @@ class DeletePost(BlogHandler):
         if self.user:
             self.render("delete.html", post = post)
 
-    def post(self, post_id):
-        key = ndb.Key('Post', int(post_id), parent = blog_key())
-        post = key.get()
+        delete = post.delete()
+        if delete:
+            self.redirect("/blog")
 
-        delete = self.request.get("delete")
-        if delete == "yes":
-            post.delete()
-            self.redirect('/blog')
-        else:
-            self.redirect('/blog')
 
 ###### Unit 2 HW's
 class Rot13(BlogHandler):

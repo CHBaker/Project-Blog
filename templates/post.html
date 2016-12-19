@@ -9,17 +9,13 @@
       {{p.created.strftime("%b %d, %Y")}}
 
       {% if user %}
-        <div class="comments">
-          <a class="post-comments" href="{{'/blog/comments/%s' % p.key.id()}}">comments  </a>
-        </div>
+        <a class="post-comments" href="{{'/blog/comments/%s' % p.key.id()}}">comment </a>
       {% endif %}
 
       {% if user and not p.author %}
-        <div class="likes">
-          <form method="post">
-            <button name="like" type="submit" value="{{like_button}}"> {{likes}}
-          </form>
-        </div>
+        <form method="post">
+          <button name="like" type="submit" value="{{like_button}}">/ like {{likes}}
+        </form>
       {% endif %}
 
       {% if user and p.author == user.key.id() %}

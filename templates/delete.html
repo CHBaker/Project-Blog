@@ -8,7 +8,9 @@
     <br>
     <br>
     <div class="final-delete">
-    <a href="{{'/blog/deletepost/%s?delete=yes' % post.key.id()}}"> Delete</a>
-    <a href="/blog"> Nope</a>
+        <form method="get">
+            <button name="Delete" type="{{post.delete()}}">
+        </form>
+        <a href="/blog"> Nope</a>
     </div>
 {% endblock %}

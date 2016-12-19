@@ -163,8 +163,32 @@ input[type=submit] {
     right: 0px;
     bottom: 0px;
     color: #999;
-
 }
+
+.post-comments {
+    position: absolute;
+    right: 100px;
+    bottom: 0px;
+    color: #999;
+    text-decoration: none;
+}
+
+.post-comments:hover {
+    text-decoration: underline;
+}
+
+
+.write {
+    font-size: 14px;
+    color: #999;
+    padding-bottom: 5px;
+    padding-left: 14em;
+}
+
+.send {
+    padding-top: 5px;
+}
+
 .post-e-d {
     position: absolute;
     right: 0px;
