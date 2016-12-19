@@ -274,10 +274,15 @@ class DeletePost(BlogHandler):
         if self.user:
             self.render("delete.html", post = post)
 
-        delete = post.delete()
-        if delete:
-            self.redirect("/blog")
+    def post(self, post_id):
+        key = ndb.Key('Post', int(post_id), parent = blog_key())
+        post = key.get()
 
+        delete = self.request.get('delete')
+
+        if delete:
+            post.delete()
+            self.redirect("/blog")
 
 ###### Unit 2 HW's
 class Rot13(BlogHandler):
