@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-    {{post.render(user) | safe}}
+    {{post.render(post_author) | safe}}
     <br><br>
-    {% if user %}
     <form class="comments-box" method="post">
         <label class="write">
         - Write Comment -<br>
@@ -12,13 +10,18 @@
         <input class="combox" type="text" name="comment" value="{{comment}}">
         <input class="send" type="submit">
     </form>
-    {% endif %}
     <br><br>
-    {% for c in comments%}
-        <div class="usercomment">
-            {{post.author}}
-        </div>
-        {{comment}}
-    {% endfor %}
+    {% if comments %}
+        {% for c in comments%}
+            {% if c['c_name']%}
+            <div class="usercomment">
+                {{c['c_name']}}
+            </div>
+            {% endif %}
+            {% if c['c_comment']%}
+                {{c['c_comment']}}
+            {% endif %}
+        {% endfor %}
+    {% endif %}
 
 {% endblock %}

@@ -13,6 +13,15 @@ from google.appengine.ext import ndb
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
+# def get_name(key):
+#     #some_obj = Model.get_by_id(id)
+#     #id = key.id()
+#     user_id = key.id()
+#     user = User.get_by_id(user_id)
+#     print user
+#     return "author"
+
+# jinja_env.filters['get_name'] = get_name
 
 secret = 'fart'
 
@@ -153,23 +162,45 @@ class Post(ndb.Model, BlogHandler):
 
 class Comment(ndb.Model, BlogHandler):
     comment = ndb.StringProperty(required = True)
-    post = ndb.KeyProperty(kind = 'Post', required = True)
-    user = ndb.StringProperty(required = True)
+    post = ndb.KeyProperty(kind = 'Post')
+    user = ndb.KeyProperty(kind = 'User')
+
+
 
 class CommentPage(BlogHandler):
     def get(self, post_id):
-        key = ndb.Key('Post', int(post_id), parent=blog_key())
-        post = key.get()
+        print "GET"
+        post_key = ndb.Key('Post', int(post_id), parent=blog_key())
+        post = post_key.get()
+        #fetch comments for the post_key
+        comments = Comment.query(Comment.post == post_key)
+        list_comments = []
+        c_dictionary = {}
+        if comments:
+            for each_comment in comments:
+                user = User.query(User.key == each_comment.user)
+                print user
+                if not user:
+                    c_dictionary['c_name'] = None
+                else:
+                    c_dictionary['c_name'] = user.name
+                c_dictionary['c_comment'] = each_comment.comment
+                list_comments.append(c_dictionary)
+
 
         if not self.user:
             self.redirect('/signup')
-        comments = post.comments
-        self.render('comments.html', post = post, comments = comments)
+        #comments = post.comments
+        self.render('comments.html', post_author = post.name,
+                                     post = post,
+                                     comments = list_comments)
 
     def post(self, post_id):
+        print "POST"
         key = ndb.Key('Post', int(post_id), parent=blog_key())
+        print key
         post = key.get()
-
+        comments = Comment.query(Comment.post == key)
         if not self.user:
             self.redirect('/signup')
         if not post:
@@ -179,12 +210,22 @@ class CommentPage(BlogHandler):
         comment = self.request.get('comment')
         user = self.user
 
-        if comment != " ":
-            p = Comment(parent = com_key(), comment = comment, post = post, user = user)
+        if comment:
+            p = Comment(parent = com_key(),
+                        comment = comment,
+                        post = key)
             p.put()
+            error = None
         else:
             error = "no blank comments"
-            self.render('comments.html', post = post, comments = comments)
+
+        c_dictionary = {}
+        for each_comment in comments:
+            user = User.query(User.key == each_comment.user)
+            c_dictionary['c_name'] = user.name
+            c_dictionary['c_comment'] = each_comment.comment
+
+        self.render('comments.html', error = error, post = post, comments = c_dictionary)
 
 class BlogFront(BlogHandler):
     def get(self):
