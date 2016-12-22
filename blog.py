@@ -145,20 +145,20 @@ class Post(ndb.Model, BlogHandler):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self, user = user)
 
-#     @classproperty
-#     def like_count(self, user):
-#         return likes.length
+    @classproperty
+    def like_count(cls, user):
+         return likes.length
 
 
-# class LikePost(BlogHandler):
-#     def get(self, post_id):
-#         key = ndb.Key('Post', int(post_id), parent=blog_key())
-#         post = key.get()
-#         if post and self.user:
-#             if self.user in post.likes:
-#                 post.likes.remove(self.user)
-#             else:
-#                 post.likes.append(self.user)
+class LikePost(BlogHandler):
+    def get(self, post_id):
+        key = ndb.Key('Post', int(post_id), parent=blog_key())
+        post = key.get()
+        if post and self.user and self.user != post.author:
+            if self.user in post.likes:
+                post.likes.remove(self.user)
+            else:
+                post.likes.append(self.user)
 
 class Comment(ndb.Model, BlogHandler):
     comment = ndb.StringProperty(required = True)

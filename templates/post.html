@@ -12,9 +12,11 @@
         <a class="post-comments" href="{{'/blog/comments/%s' % p.key.id()}}">comment </a>
       {% endif %}
 
-      {% if user and not p.author %}
+      {% if user and user != p.author %}
         <form method="post">
-          <button name="like" type="submit" value="{{like_button}}">/ like {{likes}}
+          <input type="hidden" value="{{p.key}}">
+          <button name="like" type="submit" value="{{self.user}}">/ like {{likes}}
+          </button>
         </form>
       {% endif %}
 
