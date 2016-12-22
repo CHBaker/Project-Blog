@@ -1,27 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-    {{post.render(post_author) | safe}}
+    {{post.render(user) | safe}}
     <br><br>
     <form class="comments-box" method="post">
         <label class="write">
         - Write Comment -<br>
         </label>
-        <input class="combox" type="text" name="comment" value="{{comment}}">
-        <input class="send" type="submit">
+        <input class="com_box" type="text" name="comment">
+        <input class="com_send" type="submit">
     </form>
+    {{error}}
     <br><br>
     {% if comments %}
-        {% for c in comments%}
-            {% if c['c_name']%}
-            <div class="usercomment">
-                {{c['c_name']}}
+        <div class="user_comment">
+        {% for c in comments %}
+            {{c.name}}
+            <div class="comment_content">
+            {{c.comment | safe}}
             </div>
-            {% endif %}
-            {% if c['c_comment']%}
-                {{c['c_comment']}}
-            {% endif %}
+        </div>
         {% endfor %}
-    {% endif %}
+    {% endif%}
 
 {% endblock %}

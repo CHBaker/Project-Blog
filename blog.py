@@ -162,45 +162,31 @@ class Post(ndb.Model, BlogHandler):
 
 class Comment(ndb.Model, BlogHandler):
     comment = ndb.StringProperty(required = True)
-    post = ndb.KeyProperty(kind = 'Post')
-    user = ndb.KeyProperty(kind = 'User')
-
-
+    post = ndb.KeyProperty(kind = 'Post', required = True)
+    user = ndb.KeyProperty(kind = 'User', required = True)
+    name = ndb.StringProperty(required = True)
+    created = ndb.DateTimeProperty(auto_now_add = True)
 
 class CommentPage(BlogHandler):
     def get(self, post_id):
-        print "GET"
         post_key = ndb.Key('Post', int(post_id), parent=blog_key())
         post = post_key.get()
         #fetch comments for the post_key
-        comments = Comment.query(Comment.post == post_key)
-        list_comments = []
-        c_dictionary = {}
-        if comments:
-            for each_comment in comments:
-                user = User.query(User.key == each_comment.user)
-                print user
-                if not user:
-                    c_dictionary['c_name'] = None
-                else:
-                    c_dictionary['c_name'] = user.name
-                c_dictionary['c_comment'] = each_comment.comment
-                list_comments.append(c_dictionary)
-
-
+        comments = Comment.query(Comment.post ==
+                                 post_key).order(-Comment.created)
         if not self.user:
             self.redirect('/signup')
-        #comments = post.comments
-        self.render('comments.html', post_author = post.name,
-                                     post = post,
-                                     comments = list_comments)
+        if not post:
+            self.error(404)
+            return
+
+        self.render("comments.html", post = post,
+                                     comments = comments)
 
     def post(self, post_id):
-        print "POST"
         key = ndb.Key('Post', int(post_id), parent=blog_key())
-        print key
         post = key.get()
-        comments = Comment.query(Comment.post == key)
+
         if not self.user:
             self.redirect('/signup')
         if not post:
@@ -209,23 +195,19 @@ class CommentPage(BlogHandler):
 
         comment = self.request.get('comment')
         user = self.user
+        name = self.user.name
 
         if comment:
             p = Comment(parent = com_key(),
                         comment = comment,
-                        post = key)
+                        post = post.key,
+                        user = user.key)
             p.put()
+            self.redirect('/blog/comments/%s' % post_id)
             error = None
         else:
             error = "no blank comments"
-
-        c_dictionary = {}
-        for each_comment in comments:
-            user = User.query(User.key == each_comment.user)
-            c_dictionary['c_name'] = user.name
-            c_dictionary['c_comment'] = each_comment.comment
-
-        self.render('comments.html', error = error, post = post, comments = c_dictionary)
+            self.redirect('/blog/comments/%s' % post_id, comment = comment, error = error)
 
 class BlogFront(BlogHandler):
     def get(self):
@@ -276,7 +258,7 @@ class EditPost(BlogHandler):
         if not post:
             return self.error(404)
 
-        if self.user and user.key.id() == post.author:
+        if self.user and self.user.key.id() == post.author:
             subject = post.subject
             content = post.content
             self.render("editpost.html", post = post, subject = subject, content = content)
@@ -312,17 +294,18 @@ class DeletePost(BlogHandler):
         if not post:
             return self.error(404)
 
-        if self.user:
-            self.render("delete.html", post = post)
+        if not self.user:
+            self.redirect("/signup")
+
+        self.render("delete.html", post = post)
 
     def post(self, post_id):
-        key = ndb.Key('Post', int(post_id), parent = blog_key())
-        post = key.get()
+        yes_delete = self.request.get('delete')
 
-        delete = self.request.get('delete')
-
-        if delete:
-            post.delete()
+        if yes_delete != None:
+            ndb.Key('Post', int(post_id), parent = blog_key()).delete()
+            self.redirect("/blog")
+        else:
             self.redirect("/blog")
 
 ###### Unit 2 HW's
