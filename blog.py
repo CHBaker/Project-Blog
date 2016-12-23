@@ -171,8 +171,12 @@ class CommentPage(BlogHandler):
         post_key = ndb.Key('Post', int(post_id), parent=blog_key())
         post = post_key.get()
         #fetch comments for the post_key
-        comments = Comment.query(Comment.post ==
-                                 post_key).order(-Comment.created)
+        # comments = Comment.query(Comment.post ==
+        #                          post_key, ancestor=com_key).order(-Comment.created)
+        # cls.query(ancestor=version_key()).filter(topic=topic).order(-cls.created)
+        comments = Comment.query(ancestor=com_key()).filter(
+                                 Comment.post == post_key).order(
+                                 -Comment.created)
         if not self.user:
             self.redirect('/signup')
         if not post:
@@ -204,10 +208,9 @@ class CommentPage(BlogHandler):
                         name = name)
             p.put()
             self.redirect('/blog/comments/%s' % post_id)
-            error = None
         else:
             error = "no blank comments"
-            self.redirect('/blog/comments/%s' % post_id, comment = comment, error = error)
+            self.redirect('/blog/comments/%s' % post_id, error = error)
 
 class BlogFront(BlogHandler):
     def get(self):
