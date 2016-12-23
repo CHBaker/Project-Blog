@@ -145,9 +145,8 @@ class Post(ndb.Model, BlogHandler):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self, user = user)
 
-    @classproperty
     def like_count(cls, user):
-         return likes.length
+         return length(likes)
 
 
 class LikePost(BlogHandler):
@@ -201,7 +200,8 @@ class CommentPage(BlogHandler):
             p = Comment(parent = com_key(),
                         comment = comment,
                         post = post.key,
-                        user = user.key)
+                        user = user.key,
+                        name = name)
             p.put()
             self.redirect('/blog/comments/%s' % post_id)
             error = None
