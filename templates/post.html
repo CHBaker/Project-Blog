@@ -12,13 +12,15 @@
         <a class="post-comments" href="{{'/blog/comments/%s' % p.key.id()}}">comment </a>
       {% endif %}
 
-      {% if user and user.key.id() != p.author %}
-        <form method="post">
-          <input type="hidden" value="{{p.key}}">
-          <button name="like" type="submit" value="{{self.user}}">/ like {{likes}}
-          </button>
-        </form>
-      {% endif %}
+      <div class="like_count">
+        {% if user and user.key.id() != p.author %}
+          <form method="post">
+            <button name="like" type="submit" value="{{p.key}}">/ like
+            </button>
+          </form>
+        {% endif %}
+        {{p.likes}}
+      </div>
 
       {% if user and p.author == user.key.id() %}
         <div class="post-e-d">

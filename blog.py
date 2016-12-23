@@ -148,16 +148,37 @@ class Post(ndb.Model, BlogHandler):
     def like_count(cls, user):
          return length(likes)
 
+class Like(ndb.Model, BlogHandler):
+    user = ndb.KeyProperty(kind = 'User', required = True)
+    post = ndb.KeyProperty(kind = 'Post', required = True)
 
 class LikePost(BlogHandler):
-    def get(self, post_id):
-        key = ndb.Key('Post', int(post_id), parent=blog_key())
-        post = key.get()
-        if post and self.user and self.user != post.author:
-            if self.user in post.likes:
-                post.likes.remove(self.user)
+    def post(self, post_id):
+        post_key = ndb.Key('Post', int(post_id), parent=blog_key())
+        post = post_key.get()
+        like_count = Like.query(ancestor=blog_key()).filter(post=post_key)
+
+        if self.user.key.id() != post.author:
+            if self.user != like_count.user.key:
+                if like_count == None:
+                    like_count = 1
+                else:
+                    like_count += 1
             else:
-                post.likes.append(self.user)
+                if like_count != None:
+                    like_count -= 1
+
+
+        user = self.user
+        post = self.request.get("like")
+        like_count = post.likes
+        a = Like(parent = blog_key(),
+                 user = user.key,
+                 post = post.key)
+        b = Post(likes = like_count)
+        a.put()
+        b.put()
+        self.render("front.html", post = post)
 
 class Comment(ndb.Model, BlogHandler):
     comment = ndb.StringProperty(required = True)
@@ -187,8 +208,8 @@ class CommentPage(BlogHandler):
                                      comments = comments)
 
     def post(self, post_id):
-        key = ndb.Key('Post', int(post_id), parent=blog_key())
-        post = key.get()
+        post_key = ndb.Key('Post', int(post_id), parent=blog_key())
+        post = post_key.get()
 
         if not self.user:
             self.redirect('/signup')
@@ -199,6 +220,9 @@ class CommentPage(BlogHandler):
         comment = self.request.get('comment')
         user = self.user
         name = self.user.name
+        comments = Comment.query(ancestor=com_key()).filter(
+                                 Comment.post == post_key).order(
+                                 -Comment.created)
 
         if comment:
             p = Comment(parent = com_key(),
@@ -210,7 +234,10 @@ class CommentPage(BlogHandler):
             self.redirect('/blog/comments/%s' % post_id)
         else:
             error = "no blank comments"
-            self.redirect('/blog/comments/%s' % post_id, error = error)
+            self.render("comments.html",
+                         error = error,
+                         post = post,
+                         comments = comments)
 
 class BlogFront(BlogHandler):
     def get(self):
