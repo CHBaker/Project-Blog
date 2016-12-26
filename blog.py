@@ -9,76 +9,81 @@ import webapp2
 import jinja2
 
 from google.appengine.ext import ndb
-
+# initialize Jinja2
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                autoescape = True)
-# def get_name(key):
-#     #some_obj = Model.get_by_id(id)
-#     #id = key.id()
-#     user_id = key.id()
-#     user = User.get_by_id(user_id)
-#     print user
-#     return "author"
+#sets string for hmac
+secret = 'dogs'
 
-# jinja_env.filters['get_name'] = get_name
-
-secret = 'fart'
-
+#global render function for Jinja templates
 def render_str(template, **params):
     t = jinja_env.get_template(template)
     return t.render(params)
 
+#creates new secure value using hmac and secret
 def make_secure_val(val):
     return '%s|%s' % (val, hmac.new(secret, val).hexdigest())
 
+#makes sure secure val is equal to the val in make_secure_val
 def check_secure_val(secure_val):
     val = secure_val.split('|')[0]
     if secure_val == make_secure_val(val):
         return val
 
+#Main Blog Handler inherited by other Handlers
 class BlogHandler(webapp2.RequestHandler):
+    #simplifies write process
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
+    #class level render function with self, and user param
     def render_str(self, template, **params):
         params['user'] = self.user
         return render_str(template, **params)
 
+    #class level render function render_str + write
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
+    #sets cookie to a secure hashed value
     def set_secure_cookie(self, name, val):
         cookie_val = make_secure_val(val)
         self.response.headers.add_header(
             'Set-Cookie',
             '%s=%s; Path=/' % (name, cookie_val))
 
+    #gets cookie and checks match for the value
     def read_secure_cookie(self, name):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
+    #uses cookie to keep user logged in
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key.id()))
 
+    #uses cookie to log user out
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
 
+    #checks cookie on every page to keep user logged in
     def initialize(self, *a, **kw):
         webapp2.RequestHandler.initialize(self, *a, **kw)
         uid = self.read_secure_cookie('user_id')
         self.user = uid and User.by_id(int(uid))
 
+#render specific to a post
 def render_post(response, post):
     response.out.write('<b>' + post.subject + '</b><br>')
     response.out.write(post.content)
 
+#class for example write
 class MainPage(BlogHandler):
   def get(self):
       self.write('Hello, Udacity!')
 
-
 ##### user stuff
+#creates password salts, hashes pass, validates hashes' pass
 def make_salt(length = 5):
     return ''.join(random.choice(letters) for x in xrange(length))
 
@@ -92,23 +97,28 @@ def valid_pw(name, password, h):
     salt = h.split(',')[0]
     return h == make_pw_hash(name, password, salt)
 
+#creates user group for multiple blogs
 def users_key(group = 'default'):
     return ndb.Key('users', group)
 
+#model stores user info in db
 class User(ndb.Model):
     name = ndb.StringProperty(required = True)
     pw_hash = ndb.StringProperty(required = True)
     email = ndb.StringProperty()
 
+    #get user by id shortcut
     @classmethod
     def by_id(cls, uid):
         return User.get_by_id(uid, parent = users_key())
 
+    #get user by name shortcut
     @classmethod
     def by_name(cls, name):
         u = User.query().filter(ndb.GenericProperty('name')==name).get()
         return u
 
+    #check/validate user pass on signup
     @classmethod
     def register(cls, name, pw, email = None):
         pw_hash = make_pw_hash(name, pw)
@@ -117,6 +127,7 @@ class User(ndb.Model):
                     pw_hash = pw_hash,
                     email = email)
 
+    #checks user and pass for login
     @classmethod
     def login(cls, name, pw):
         u = cls.by_name(name)
@@ -125,13 +136,15 @@ class User(ndb.Model):
 
 
 ##### blog stuff
-
+# creates parent/ancestor for strong consistancy
 def blog_key(name = 'default'):
     return ndb.Key('blogs', name)
 
+# creates parent/ancestor for strong consistancy
 def com_key(name = 'default'):
     return ndb.Key('comments', name)
 
+# Post model to store Post info
 class Post(ndb.Model, BlogHandler):
     subject = ndb.StringProperty(required = True)
     content = ndb.TextProperty(required = True)
@@ -141,45 +154,21 @@ class Post(ndb.Model, BlogHandler):
     name = ndb.StringProperty(required = True)
     likes = ndb.IntegerProperty(repeated = True)
 
+    #renders post content with <br> instead of \n
     def render(self, user):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self, user = user)
 
-    def like_count(cls, user):
-         return length(likes)
+    #finds lenth of likes list
+    # def like_count(cls, user):
+    #      return length(likes)
 
+#like model stores like info
 class Like(ndb.Model, BlogHandler):
     user = ndb.KeyProperty(kind = 'User', required = True)
     post = ndb.KeyProperty(kind = 'Post', required = True)
 
-class LikePost(BlogHandler):
-    def post(self, post_id):
-        post_key = ndb.Key('Post', int(post_id), parent=blog_key())
-        post = post_key.get()
-        like_count = Like.query(ancestor=blog_key()).filter(post=post_key)
-
-        if self.user.key.id() != post.author:
-            if self.user != like_count.user.key:
-                if like_count == None:
-                    like_count = 1
-                else:
-                    like_count += 1
-            else:
-                if like_count != None:
-                    like_count -= 1
-
-
-        user = self.user
-        post = self.request.get("like")
-        like_count = post.likes
-        a = Like(parent = blog_key(),
-                 user = user.key,
-                 post = post.key)
-        b = Post(likes = like_count)
-        a.put()
-        b.put()
-        self.render("front.html", post = post)
-
+#Comment model to store comment info
 class Comment(ndb.Model, BlogHandler):
     comment = ndb.StringProperty(required = True)
     post = ndb.KeyProperty(kind = 'Post', required = True)
@@ -187,14 +176,12 @@ class Comment(ndb.Model, BlogHandler):
     name = ndb.StringProperty(required = True)
     created = ndb.DateTimeProperty(auto_now_add = True)
 
+#retrieves comments for post and updates with each new comment
 class CommentPage(BlogHandler):
     def get(self, post_id):
         post_key = ndb.Key('Post', int(post_id), parent=blog_key())
         post = post_key.get()
-        #fetch comments for the post_key
-        # comments = Comment.query(Comment.post ==
-        #                          post_key, ancestor=com_key).order(-Comment.created)
-        # cls.query(ancestor=version_key()).filter(topic=topic).order(-cls.created)
+
         comments = Comment.query(ancestor=com_key()).filter(
                                  Comment.post == post_key).order(
                                  -Comment.created)
@@ -239,11 +226,43 @@ class CommentPage(BlogHandler):
                          post = post,
                          comments = comments)
 
+# Renders Posts for main page by newest post
 class BlogFront(BlogHandler):
     def get(self):
         posts = Post.query(ancestor=blog_key()).order(-Post.created)
         self.render('front.html', posts = posts)
 
+    #handles likes for front page
+    def post(self):
+        def post(self, post_id):
+            post_key = ndb.Key('Post', int(post_id), parent=blog_key())
+            post = post_key.get()
+            like_count = Like.query(ancestor=blog_key()).filter(post=post_key)
+
+            #increments the likes for the post on click
+            if self.user.key.id() != post.author:
+                if self.user != like_count.user.key:
+                    if like_count == None:
+                        like_count = 1
+                    else:
+                        like_count += 1
+                else:
+                    if like_count != None:
+                        like_count -= 1
+
+
+            user = self.user
+            post = self.request.get("like")
+            like_count = post.likes
+            a = Like(parent = blog_key(),
+                     user = user.key,
+                     post = post.key)
+            b = Post(likes = like_count)
+            a.put()
+            b.put()
+            self.render("front.html", post = post)
+
+#Post handler, after new post, redirect to permalink of post content
 class PostPage(BlogHandler):
     def get(self, post_id):
         key = ndb.Key('Post', int(post_id), parent=blog_key())
@@ -256,6 +275,7 @@ class PostPage(BlogHandler):
 
         self.render("permalink.html", post = post)
 
+#Handler to create a new post
 class NewPost(BlogHandler):
     def get(self):
         if self.user:
@@ -280,6 +300,7 @@ class NewPost(BlogHandler):
             error = "subject and content, please!"
             self.render("newpost.html", subject=subject, content=content, error=error)
 
+#Handler to Edit Post
 class EditPost(BlogHandler):
     def get(self, post_id):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
@@ -299,9 +320,14 @@ class EditPost(BlogHandler):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
         post = key.get()
 
-        if not self.user and user.key.id() == post.author:
+        cancel = self.request.get("cancel")
+        if cancel != None:
+            self.redirect('/blog')
+
+        elif not self.user and user.key.id() == post.author:
             return self.redirect('/signup')
 
+        #updates post Model with edited subject/content
         else:
             subject = self.request.get('subject')
             content = self.request.get('content')
@@ -316,6 +342,7 @@ class EditPost(BlogHandler):
                 error = "subject and content, please!"
                 self.render('/blog/editpost/%s' % p.key.id(), subject = subject, content = content, error = error)
 
+#Handler to delete a post
 class DeletePost(BlogHandler):
     def get(self, post_id):
         key = ndb.Key('Post', int(post_id), parent = blog_key())
@@ -332,6 +359,7 @@ class DeletePost(BlogHandler):
     def post(self, post_id):
         yes_delete = self.request.get('delete')
 
+        #checks to make sure user wants to delete post
         if yes_delete != None:
             ndb.Key('Post', int(post_id), parent = blog_key()).delete()
             self.redirect("/blog")
@@ -351,19 +379,22 @@ class Rot13(BlogHandler):
 
         self.render('rot13-form.html', text = rot13)
 
-
+#sets parameters for user name
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
     return username and USER_RE.match(username)
 
+#sets parameters for password
 PASS_RE = re.compile(r"^.{3,20}$")
 def valid_password(password):
     return password and PASS_RE.match(password)
 
+#sets parameters for email
 EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
 def valid_email(email):
     return not email or EMAIL_RE.match(email)
 
+#handler for users to register
 class Signup(BlogHandler):
     def get(self):
         self.render("signup-form.html")
@@ -378,6 +409,7 @@ class Signup(BlogHandler):
         params = dict(username = self.username,
                       email = self.email)
 
+        ##### errors for invalid inputs
         if not valid_username(self.username):
             params['error_username'] = "That's not a valid username."
             have_error = True
@@ -398,13 +430,16 @@ class Signup(BlogHandler):
         else:
             self.done()
 
+    #sets flag for console, for succesful signup
     def done(self, *a, **kw):
         raise NotImplementedError
 
+#redirects new user to permalink for welcome page(not in use currently)
 class Unit2Signup(Signup):
     def done(self):
         self.redirect('/unit2/welcome?username=' + self.username)
 
+#Handler inherits from Signup for user Registration
 class Register(Signup):
     def done(self):
         #make sure the user doesn't already exist
@@ -419,6 +454,7 @@ class Register(Signup):
             self.login(u)
             self.redirect('/blog')
 
+#handler for current users to log in
 class Login(BlogHandler):
     def get(self):
         self.render('login-form.html')
@@ -427,6 +463,7 @@ class Login(BlogHandler):
         username = self.request.get('username')
         password = self.request.get('password')
 
+        #checks database and confirms values for valid user/pass
         u = User.login(username, password)
         if u:
             self.login(u)
@@ -435,18 +472,20 @@ class Login(BlogHandler):
             msg = 'Invalid login'
             self.render('login-form.html', error = msg)
 
+#Handler for quick logout button on all pages
 class Logout(BlogHandler):
     def get(self):
         self.logout()
         self.redirect('/blog')
 
+#welcome page for user (not currently in use)
 class Unit3Welcome(BlogHandler):
     def get(self):
         if self.user:
             self.render('welcome.html', username = self.user.name)
         else:
             self.redirect('/signup')
-
+#welcome page for user, checks values (not currently in use)
 class Welcome(BlogHandler):
     def get(self):
         username = self.request.get('username')
