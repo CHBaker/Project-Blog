@@ -235,6 +235,8 @@ class BlogFront(BlogHandler):
     #handles likes for front page
     def post(self):
         def post(self, post_id):
+            posts = Post.query(ancestor=blog_key()).order(-Post.created)
+
             post_key = ndb.Key('Post', int(post_id), parent=blog_key())
             post = post_key.get()
             like_count = Like.query(ancestor=blog_key()).filter(post=post_key)
@@ -260,7 +262,7 @@ class BlogFront(BlogHandler):
             b = Post(likes = like_count)
             a.put()
             b.put()
-            self.render("front.html", post = post)
+            self.render("front.html", post = post, posts = posts)
 
 #Post handler, after new post, redirect to permalink of post content
 class PostPage(BlogHandler):
