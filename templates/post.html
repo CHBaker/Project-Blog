@@ -15,11 +15,11 @@
       <div class="like_count">
         {% if user and user.key.id() != p.author %}
           <form method="post" action="/blog">
-            <button name="like" type="submit" value="{{p.key}}">/ like
+            <button name="like" type="submit" value="{{p}}">like
             </button>
           </form>
         {% endif %}
-        {% if p.likes | length != 0 %}
+        {% if p.likes != 0 %}
           {{p.likes | length}}
         {% endif %}
       </div>

@@ -159,10 +159,6 @@ class Post(ndb.Model, BlogHandler):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p = self, user = user)
 
-    #finds lenth of likes list
-    # def like_count(cls, user):
-    #      return length(likes)
-
 #like model stores like info
 class Like(ndb.Model, BlogHandler):
     user = ndb.KeyProperty(kind = 'User', required = True)
@@ -234,35 +230,33 @@ class BlogFront(BlogHandler):
 
     #handles likes for front page
     def post(self):
-        def post(self, post_id):
-            posts = Post.query(ancestor=blog_key()).order(-Post.created)
+        posts = Post.query(ancestor=blog_key()).order(-Post.created)
 
-            post_key = ndb.Key('Post', int(post_id), parent=blog_key())
-            post = post_key.get()
-            like_count = Like.query(ancestor=blog_key()).filter(post=post_key)
+        post_id = self.request.get("like")
+        post_key = Post.get_by_id(post_id)
+        likes = Like.query(ancestor = post_key).filter(
+                                 Like.post == post_key)
 
-            #increments the likes for the post on click
+        #increments the likes for the post on click
+        if post_key:
             if self.user.key.id() != post.author:
-                if self.user != like_count.user.key:
-                    if like_count == None:
-                        like_count = 1
+                if self.user not in likes.user:
+                    if post_key.likes == None:
+                        post_key.likes = 1
                     else:
-                        like_count += 1
-                else:
-                    if like_count != None:
-                        like_count -= 1
+                        post_key.likes += 1
+                elif self.user in likes.user:
+                    if post_key.likes != None:
+                        post_key.likes -= 1
+                    else:
+                        post_key.likes = None
 
-
-            user = self.user
-            post = self.request.get("like")
-            like_count = post.likes
-            a = Like(parent = blog_key(),
-                     user = user.key,
-                     post = post.key)
-            b = Post(likes = like_count)
-            a.put()
-            b.put()
-            self.render("front.html", post = post, posts = posts)
+        user = self.user
+        l = Like(parent = post_key,
+                 user = user.key,
+                 post = post_key)
+        l.put()
+        self.render("front.html", posts = posts)
 
 #Post handler, after new post, redirect to permalink of post content
 class PostPage(BlogHandler):
