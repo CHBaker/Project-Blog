@@ -225,39 +225,34 @@ class CommentPage(BlogHandler):
 # Renders Posts for main page by newest post
 class BlogFront(BlogHandler):
     def get(self):
-        posts = Post.query(ancestor = blog_key()).order(-Post.created)
+        posts = Post.query(ancestor=blog_key()).order(-Post.created)
         self.render('front.html', posts = posts)
 
     #handles likes for front page
     def post(self):
-        posts = Post.query(ancestor = blog_key()).order(-Post.created)
+        posts = Post.query(ancestor=blog_key()).order(-Post.created)
 
-        post_id = self.request.get('like')
-        print "id POST ", post_id
-        a_post = Post.get_by_id(int(post_id))
-        print "A POST", a_post
-        post_key = a_post.key
-        print "Key POST", post_key
-
+        post_id = self.request.get("like")
+        post_key = Post.get_by_id(post_id)
         likes = Like.query(ancestor = post_key).filter(
                                  Like.post == post_key)
 
-        #increments the likes for the post on like
-        if a_post:
-            if self.user.key.id() != a_post.author:
+        #increments the likes for the post on click
+        if post_key:
+            if self.user.key.id() != post.author:
                 if self.user not in likes.user:
-                    if a_post.likes == None:
-                        a_post.likes = 1
+                    if post_key.likes == None:
+                        post_key.likes = 1
                     else:
-                        a_post.likes += 1
+                        post_key.likes += 1
                 elif self.user in likes.user:
-                    if a_post.likes != None:
-                        a_post.likes -= 1
+                    if post_key.likes != None:
+                        post_key.likes -= 1
                     else:
-                        a_post.likes = None
+                        post_key.likes = None
 
         user = self.user
-        l = Like(parent = a_post,
+        l = Like(parent = post_key,
                  user = user.key,
                  post = post_key)
         l.put()
