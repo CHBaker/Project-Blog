@@ -245,24 +245,25 @@ class BlogFront(BlogHandler):
 
         for like in likes:
             print "LIKES", like
+
+        if not a_post.like_count:
+            a_post.like_count = 0
         #increments the likes for the post on click
         for l in likes:
+            like_user = l.user.get()
             if post_key:
                 if cur_user:
                     if cur_user.key.id() != a_post.author:
-                        if a_post.like_count == None:
-                            a_post.like_count = 0
-                        if cur_user != l.user:
+                        if cur_user != like_user:
+                            print "#L USER", like_user, "#CUR USER", cur_user
                             if a_post.like_count == 0:
                                 a_post.like_count = 1
                             else:
                                 print "LIKECOUNT", a_post.like_count
                                 a_post.like_count + 1
-                        elif cur_user in l.user:
-                            if a_post.like_count != 0:
-                                a_post.like_count - 1
-                            else:
-                                a_post.like_count = 0
+                        elif cur_user == like_user:
+                            print "L USER", like_user
+                            a_post.like_count - 1
 
         user = cur_user
         l = Like(parent = post_key,
