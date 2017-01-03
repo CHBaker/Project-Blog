@@ -152,7 +152,7 @@ class Post(ndb.Model, BlogHandler):
     last_modified = ndb.DateTimeProperty(auto_now = True)
     author = ndb.IntegerProperty(required = True)
     name = ndb.StringProperty(required = True)
-    like_count = ndb.IntegerProperty()
+    like_count = ndb.IntegerProperty(default = 0)
 
     #renders post content with <br> instead of \n
     def render(self, user):
@@ -230,46 +230,38 @@ class BlogFront(BlogHandler):
     #handles likes for front page
     def post(self):
         post_id = self.request.get("like")
-        print "POST ID", post_id
 
         post_key = ndb.Key('Post', int(post_id), parent = blog_key())
-        print "POST KEY", post_key
 
         a_post = post_key.get()
-        print "A POST", a_post
 
         cur_user = self.user
-        print "CUR_USER", cur_user
 
-        likes = Like.query(ancestor = post_key)
-
-        for like in likes:
-            print "LIKES", like
-
-        if not a_post.like_count:
-            a_post.like_count = 0
         #increments the likes for the post on click
-        for l in likes:
-            like_user = l.user.get()
-            if post_key:
-                if cur_user:
-                    if cur_user.key.id() != a_post.author:
-                        if cur_user != like_user:
-                            print "#L USER", like_user, "#CUR USER", cur_user
-                            if a_post.like_count == 0:
-                                a_post.like_count = 1
-                            else:
-                                print "LIKECOUNT", a_post.like_count
-                                a_post.like_count + 1
-                        elif cur_user == like_user:
-                            print "L USER", like_user
-                            a_post.like_count - 1
+        if post_key:
+            if cur_user:
+                if cur_user.key.id() != a_post.author:
+                    #print "CUR USER ID", cur_user.key.id()
+                    likes = Like.query(ancestor = post_key).fetch()
+                    #print "LIKE USER ID", Like.user.id()
+                    print "### LIKES QU ###", likes
 
-        user = cur_user
-        l = Like(parent = post_key,
-                 user = cur_user.key)
-        l.put()
-        self.redirect('/blog')
+                    if likes == None:
+                        a_post.like_count + 1
+                        print "#LIKE COUNT", a_post.like_count
+                        print "#LIKES", likes
+                        l = Like(parent = post_key,
+                                 user = cur_user.key)
+                        l.put()
+                        self.redirect('/blog')
+
+                    else:
+                        a_post.like_count - 1
+                        likes.delete()
+                        print "LIKE COUNT", a_post.like_count
+                        p = a_post(like_count = like_count)
+                        p.put()
+                        self.redirect('/blog')
 
 #Post handler, after new post, redirect to permalink of post content
 class PostPage(BlogHandler):
