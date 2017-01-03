@@ -241,28 +241,37 @@ class BlogFront(BlogHandler):
         if post_key:
             if cur_user:
                 if cur_user.key.id() != a_post.author:
-                    #print "CUR USER ID", cur_user.key.id()
-                    likes = Like.query(ancestor = post_key).fetch()
-                    #print "LIKE USER ID", Like.user.id()
+                    # print "CUR USER ID", cur_user
+                    # qo = ndb.QueryOptions(keys_only = True)
+                    # cur_user_key = User.query().filter(cur_user).fetch(options = qo)
+                    print "CUR USER KEY QU"
+                    like_user = Like.query(ancestor = post_key).filter(Like.user).fetch()
+
+                    for liker in like_user:
+                        like_user = like_user.id()
+
+                    print "LIKE USER ID", like_user_id
+                    likes = Like.query(ancestor = post_key).filter(like_user == cur_user.id()).fetch()
+
+                    # print "LIKE USER", Like.user
                     print "### LIKES QU ###", likes
 
-                    if likes == None:
+                    if likes == 0:
                         a_post.like_count + 1
-                        print "#LIKE COUNT", a_post.like_count
-                        print "#LIKES", likes
+                        print "#P LIKE COUNT", a_post.like_count
                         l = Like(parent = post_key,
                                  user = cur_user.key)
                         l.put()
+                        print "#LIKES", likes
                         self.redirect('/blog')
 
                     else:
                         a_post.like_count - 1
-                        likes.delete()
+                        likes[0].key.delete()
                         print "LIKE COUNT", a_post.like_count
-                        p = a_post(like_count = like_count)
-                        p.put()
                         self.redirect('/blog')
 
+                a_post.put()
 #Post handler, after new post, redirect to permalink of post content
 class PostPage(BlogHandler):
     def get(self, post_id):
