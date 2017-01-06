@@ -106,6 +106,7 @@ class User(ndb.Model):
     name = ndb.StringProperty(required = True)
     pw_hash = ndb.StringProperty(required = True)
     email = ndb.StringProperty()
+    user_id = ndb.IntegerProperty()
 
     #get user by id shortcut
     @classmethod
@@ -237,17 +238,18 @@ class BlogFront(BlogHandler):
 
         cur_user = self.user
 
+        print "CUR USER ID", cur_user.key.id()
+        likes_q = Like.query(ancestor = post_key).filter(cur_user.key.id() == like.user.key.id())
+        print "LIKE USER ID", likes_q.user.id()
+        print "### LIKES QU ###", likes
+
         #increments the likes for the post on click
         if post_key:
             if cur_user:
                 if cur_user.key.id() != a_post.author:
-                    #print "CUR USER ID", cur_user.key.id()
-                    likes = Like.query(ancestor = post_key).fetch()
-                    #print "LIKE USER ID", Like.user.id()
-                    print "### LIKES QU ###", likes
-
-                    if likes == None:
+                    if likes == []:
                         a_post.like_count + 1
+                        a_post.put()
                         print "#LIKE COUNT", a_post.like_count
                         print "#LIKES", likes
                         l = Like(parent = post_key,
@@ -256,11 +258,10 @@ class BlogFront(BlogHandler):
                         self.redirect('/blog')
 
                     else:
+                        likes[0].delete()
                         a_post.like_count - 1
-                        likes.delete()
+                        a_post.put()
                         print "LIKE COUNT", a_post.like_count
-                        p = a_post(like_count = like_count)
-                        p.put()
                         self.redirect('/blog')
 
 #Post handler, after new post, redirect to permalink of post content
