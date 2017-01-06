@@ -238,17 +238,15 @@ class BlogFront(BlogHandler):
 
         cur_user = self.user
 
-        print "CUR USER ID", cur_user.key.id()
-        likes_q = Like.query(ancestor = post_key).filter(cur_user.key.id() == like.user.key.id())
-        print "LIKE USER ID", likes_q.user.id()
-        print "### LIKES QU ###", likes
+        #checks if user has liked it already
+        likes = Like.query(ancestor = post_key).filter(cur_user.key == Like.user).fetch()
 
         #increments the likes for the post on click
         if post_key:
             if cur_user:
                 if cur_user.key.id() != a_post.author:
                     if likes == []:
-                        a_post.like_count + 1
+                        a_post.like_count = a_post.like_count + 1
                         a_post.put()
                         print "#LIKE COUNT", a_post.like_count
                         print "#LIKES", likes
@@ -258,8 +256,8 @@ class BlogFront(BlogHandler):
                         self.redirect('/blog')
 
                     else:
-                        likes[0].delete()
-                        a_post.like_count - 1
+                        likes[0].key.delete()
+                        a_post.like_count = a_post.like_count - 1
                         a_post.put()
                         print "LIKE COUNT", a_post.like_count
                         self.redirect('/blog')
@@ -487,6 +485,7 @@ class Unit3Welcome(BlogHandler):
             self.render('welcome.html', username = self.user.name)
         else:
             self.redirect('/signup')
+
 #welcome page for user, checks values (not currently in use)
 class Welcome(BlogHandler):
     def get(self):

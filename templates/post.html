@@ -19,7 +19,9 @@
             </button>
           </form>
         {% endif %}
-        likes:{{p.like_count}}
+        {% if p.like_count != 0 %}
+          likes:{{p.like_count}}
+        {% endif %}
       </div>
 
       {% if user and p.author == user.key.id() %}
