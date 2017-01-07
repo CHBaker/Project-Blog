@@ -18,9 +18,17 @@
         <div class="user_comment">
         {% for c in comments %}
             {{c.name}}
+            <br>
             <div class="comment_content">
             {{c.comment | safe}}
             </div>
+            {% if user and c.user == user.key %}
+            <div class="post-e-d">
+                <a class="post-edit" href="{{'/blog/editcom/%s' % c.key.id()}}">edit</a>
+                <span class="post-edit"> / </span>
+                <a class="post-delete" href="{{'/blog/deletecom/%s' % c.key.id()}}">delete</a>
+            </div>
+      {% endif %}
         </div>
         {% endfor %}
     {% endif%}
