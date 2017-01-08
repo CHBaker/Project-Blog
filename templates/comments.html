@@ -17,7 +17,9 @@
     {% if comments %}
         <div class="user_comment">
         {% for c in comments %}
-            {{c.name}}
+            <div class="comment_author">
+                {{c.name}}
+            </div>
             <br>
             <div class="comment_content">
             {{c.comment | safe}}
@@ -28,8 +30,11 @@
                 <span class="post-edit"> / </span>
                 <a class="post-delete" href="{{'/blog/deletecom/%s' % c.key.id()}}">delete</a>
             </div>
-      {% endif %}
+            {% endif %}
         </div>
+        <br>
+        <br>
+        <br>
         {% endfor %}
     {% endif%}
 

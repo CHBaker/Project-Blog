@@ -311,7 +311,7 @@ class CommentDelete(BlogHandler):
             # checks to make sure user wants to delete post
             if yes_delete:
                 ndb.Key('Comment', int(com_id), parent=com_key()).delete()
-                self.redirect('/blog/comments/%s' % post.key.id())
+                self.redirect('/blog')
             else:
                 self.redirect('/blog/comments/%s' % post.key.id())
         else:
