@@ -6,6 +6,8 @@ Full documentation of the project and progress is available online at https://gi
 # CONFIGURATION
     download the Git Zip or Clone the Repo from the URL above
 
+    Public version is accessible at https://my-blog-155000.appspot.com
+
 # INSTALATION
     Google App Engine must be installed and functional with launching local and public web applications on your system. For the walkthrough for GEA go to https://cloud.google.com/appengine/docs/python/
 
