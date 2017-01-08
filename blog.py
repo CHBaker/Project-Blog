@@ -87,7 +87,8 @@ def render_post(response, post):
 # class for example write
 class MainPage(BlogHandler):
     def get(self):
-        self.write('Hello, Udacity!')
+        self.write('Hello, Udacity! Here is my blog')
+        self.redirect('/blog')
 
 
 # user stuff
