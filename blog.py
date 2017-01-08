@@ -119,7 +119,6 @@ class User(ndb.Model):
     name = ndb.StringProperty(required=True)
     pw_hash = ndb.StringProperty(required=True)
     email = ndb.StringProperty()
-    user_id = ndb.IntegerProperty()
 
     # get user by id shortcut
     @classmethod
@@ -227,12 +226,12 @@ class CommentPage(BlogHandler):
                                  -Comment.created)
 
         if comment:
-            p = Comment(parent=com_key(),
+            c = Comment(parent=com_key(),
                         comment=comment,
                         post=post.key,
                         user=user.key,
                         name=name)
-            p.put()
+            c.put()
             self.redirect('/blog/comments/%s' % post_id)
         else:
             error = "no blank comments"
@@ -261,6 +260,9 @@ class CommentEdit(BlogHandler):
     def post(self, com_id):
         key = ndb.Key('Comment', int(com_id), parent=com_key())
         Comment = key.get()
+
+        if not Comment:
+            return self.error(404)
 
         if self.user and self.user.key == Comment.user:
             cancel = self.request.get("cancel")
@@ -303,6 +305,9 @@ class CommentDelete(BlogHandler):
     def post(self, com_id):
         key = ndb.Key('Comment', int(com_id), parent=com_key())
         Comment = key.get()
+
+        if not Comment:
+            return self.error(404)
 
         post_key = ndb.Key('Post', int(Comment.post.id()), parent=blog_key())
         post = key.get()
@@ -381,7 +386,7 @@ class NewPost(BlogHandler):
         if self.user:
             self.render("newpost.html")
         else:
-            self.redirect("/login")
+            return self.redirect("/login")
 
     def post(self):
         if not self.user:
@@ -431,6 +436,9 @@ class EditPost(BlogHandler):
         key = ndb.Key('Post', int(post_id), parent=blog_key())
         post = key.get()
 
+        if not post:
+            return self.error(404)
+
         if self.user and self.user.key.id() == post.author:
             cancel = self.request.get("cancel")
             if cancel:
@@ -473,6 +481,9 @@ class DeletePost(BlogHandler):
     def post(self, post_id):
         key = ndb.Key('Post', int(post_id), parent=blog_key())
         post = key.get()
+
+        if not post:
+            return self.error(404)
 
         if self.user and self.user.key.id() == post.author:
             yes_delete = self.request.get('delete')
