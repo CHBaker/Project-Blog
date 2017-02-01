@@ -8,7 +8,7 @@ Full documentation of the project and progress is available online at https://gi
 
     Public version is accessible at https://my-blog-155000.appspot.com
 
-# INSTALATION
+# INSTALLATION
     Google App Engine must be installed and functional with launching local and public web applications on your system. For the walkthrough for GEA go to https://cloud.google.com/appengine/docs/python/
 
 # OPERATING INSTRUCTIONS
