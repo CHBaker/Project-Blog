@@ -510,6 +510,7 @@ class Rot13(BlogHandler):
 
         self.render('rot13-form.html', text=rot13)
 
+
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 
 
